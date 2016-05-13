@@ -1,4 +1,4 @@
-# xmlserializer4j
+# XMLSerializer4j
 A simple and effective API for leveraging XML serialization in your Java application with ease.
 
 ## Highlights
