@@ -386,8 +386,9 @@ public class XMLSerializer {
 	/**
 	 * <p>Serializes an object to XML and returns the document containing the result.</p>
 	 * @param object
+	 * @throws XMLSerializeException
 	 */
-	public Document serialize(Object object) {
+	public Document serialize(Object object) throws XMLSerializeException {
 		Element element = serializeToElement(object, ROOT_OBJECT, null);
 		if(element != null) {
 			document.appendChild(element);
@@ -401,14 +402,15 @@ public class XMLSerializer {
 	 * <p>Serializes an object to XML and saves the result.</p>
 	 * @param object
 	 * @param result
+	 * @throws XMLSerializeException
 	 */
-	public void serialize(Object object, StreamResult result) {
+	public void serialize(Object object, StreamResult result) throws XMLSerializeException {
 		serialize(object);
 		DOMSource source = new DOMSource(document);
 		try {
 			transformer.transform(source, result);
 		} catch (TransformerException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 	
@@ -416,8 +418,9 @@ public class XMLSerializer {
 	 * <p>Serializes an object to XML and saves the result to an <code>OutputStream</code>.</p>
 	 * @param object
 	 * @param os
+	 * @throws XMLSerializeException
 	 */
-	public void serialize(Object object, OutputStream os) {
+	public void serialize(Object object, OutputStream os) throws XMLSerializeException {
 		serialize(object, new StreamResult(os));
 	}
 	
@@ -425,12 +428,13 @@ public class XMLSerializer {
 	 * <p>Serializes an object to XML and saves the result to a <code>File</code>.</p>
 	 * @param object
 	 * @param file
+	 * @throws XMLSerializeException
 	 */
-	public void serialize(Object object, File file) {
+	public void serialize(Object object, File file) throws XMLSerializeException {
 		try {
 			serialize(object, new FileOutputStream(file));
 		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 	
@@ -438,8 +442,9 @@ public class XMLSerializer {
 	 * <p>Serializes an object to XML and saves the result to a filepath.</p>
 	 * @param object
 	 * @param filepath
+	 * @throws XMLSerializeException
 	 */
-	public void serialize(Object object, String filepath) {
+	public void serialize(Object object, String filepath) throws XMLSerializeException {
 		serialize(object, new File(filepath));
 	}
 	
@@ -448,9 +453,10 @@ public class XMLSerializer {
 	 * @param object
 	 * @param elementName
 	 * @param annotatedElement optional source of annotations for the object
+	 * @throws XMLSerializeException
 	 */
 	@SuppressWarnings("unchecked")
-	public Element serializeToElement(Object object, String elementName, AnnotatedElement annotatedElement) {
+	public Element serializeToElement(Object object, String elementName, AnnotatedElement annotatedElement) throws XMLSerializeException {
 		XMLInclude include = annotatedElement != null ? annotatedElement.getAnnotation(XMLInclude.class) : null;
 		
 		if(object != null) {
@@ -458,7 +464,7 @@ public class XMLSerializer {
 			if(include == null) {
 				include = clazz.getAnnotation(XMLInclude.class);
 			}
-			if((!isEnabled(EXCLUDE_ALL) && (include == null || Inclusion.NEVER != include.type()))) {
+			if((!isEnabled(EXCLUDE_ALL) && (include == null || Inclusion.NEVER != include.include()))) {
 				
 				String reference = objectReferenceContext != null ? objectReferenceContext.getReference(object) : null;
 				Integer circularReferenceCount = circularReferences.get(object);
@@ -491,9 +497,9 @@ public class XMLSerializer {
 									serializer = (TypeSerializer<Object>) serializerClazz.newInstance();
 									customSerializerMap.put(serializerClazz, serializer);
 								} catch (InstantiationException e) {
-									throw new RuntimeException(e);
+									throw new XMLSerializeException(e);
 								} catch (IllegalAccessException e) {
-									throw new RuntimeException(e);
+									throw new XMLSerializeException(e);
 								}
 							}
 							element = serializer.serialize(this, elementName, object);
@@ -513,7 +519,7 @@ public class XMLSerializer {
 							// Get appropriate serializer for class
 							TypeSerializer<Object> serializer = (TypeSerializer<Object>) getSerializerByClass(clazz);
 							if(serializer == null) {
-								throw new IllegalStateException("No serializer found for class: " + clazz.getCanonicalName());
+								throw new XMLSerializeException("No serializer found for class: " + clazz.getCanonicalName());
 							}
 							element = serializer.serialize(this, elementName, object);
 						}
@@ -540,7 +546,7 @@ public class XMLSerializer {
 				}
 			}
 		} else {
-			if(isEnabled(INCLUDE_NULL_VALUES) || (include != null && Inclusion.ALWAYS == include.type())) {
+			if(isEnabled(INCLUDE_NULL_VALUES) || (include != null && Inclusion.ALWAYS == include.include())) {
 				// Add special null element
 				Element element = document.createElement(elementName);
 				element.setAttribute(NULL, TRUE);
@@ -561,8 +567,9 @@ public class XMLSerializer {
 	/**
 	 * <p>Deserializes the XML document.</p>
 	 * @return
+	 * @throws XMLSerializeException
 	 */
-	public Object deserialize() {
+	public Object deserialize() throws XMLSerializeException {
 		Element element = document.getDocumentElement();
 		return element != null ? deserializeElement(element, null) : null;
 	}
@@ -572,43 +579,44 @@ public class XMLSerializer {
 	 * @param element
 	 * @param optional runtime object to deserialize into
 	 * @return
+	 * @throws XMLSerializeException
 	 */
-	public Object deserializeElement(Element element, Object object) {
+	public Object deserializeElement(Element element, Object object) throws XMLSerializeException {
 		if(element.hasAttribute(XMLSerializer.CLASS)) {
 			try {
 				String clazzName = element.getAttribute(XMLSerializer.CLASS);
 				Class<?> clazz = Class.forName(clazzName);
 				
 				if(object != null && !clazz.equals(object.getClass())) {
-					throw new IllegalArgumentException("Runtime object class is not equal to serialized class; expected: " + clazz.getName() + " encountered: " + object.getClass().getName());
+					throw new XMLSerializeException("Runtime object class is not equal to serialized class; expected: " + clazz.getName() + " encountered: " + object.getClass().getName());
 				}
 				
 				@SuppressWarnings("unchecked")
 				TypeSerializer<Object> serializer = (TypeSerializer<Object>) getSerializerByClass(clazz);
 				if(serializer == null ) {
-					throw new IllegalStateException("No serializer found for class: " + clazz.getCanonicalName());
+					throw new XMLSerializeException("No serializer found for class: " + clazz.getCanonicalName());
 				}
 				object = serializer.deserialize(this, element, object);
 			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
+				throw new XMLSerializeException(e);
 			}
 		} else if(element.hasAttribute(XMLSerializer.TYPE)) {
 			@SuppressWarnings("unchecked")
 			TypeSerializer<Object[]> serializer = (TypeSerializer<Object[]>) getSerializerByClass(Object[].class);
 			if(serializer == null ) {
-				throw new IllegalStateException("No serializer found for class: " + Object[].class.getCanonicalName());
+				throw new XMLSerializeException("No serializer found for class: " + Object[].class.getCanonicalName());
 			}
 			object = serializer.deserialize(this, element, (Object[]) object);
 		} else if(element.hasAttribute(XMLSerializer.REF)) {
 			if(objectReferenceContext != null) {
 				return objectReferenceContext.getObject(element.getAttribute(XMLSerializer.REF));
 			} else {
-				throw new IllegalStateException("Object reference context not set");
+				throw new XMLSerializeException("Object reference context not set");
 			}
 		} else if(XMLSerializer.TRUE.equals(element.getAttribute(XMLSerializer.NULL))) {
 			object = null;
 		} else {
-			throw new IllegalArgumentException("Could not deserialize element");
+			throw new XMLSerializeException("Could not deserialize element");
 		}
 		if(element.hasAttribute(XMLSerializer.ID)) {
 			String reference = element.getAttribute(XMLSerializer.ID);

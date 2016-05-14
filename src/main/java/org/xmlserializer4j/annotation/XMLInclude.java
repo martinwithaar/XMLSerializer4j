@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
 public @interface XMLInclude {
-	public Inclusion type() default Inclusion.ALWAYS;
+	public Inclusion include() default Inclusion.ALWAYS;
 }

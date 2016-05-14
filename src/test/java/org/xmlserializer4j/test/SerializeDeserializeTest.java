@@ -1,7 +1,8 @@
 package org.xmlserializer4j.test;
 import org.junit.Test;
+import org.xmlserializer4j.XMLSerializeException;
 import org.xmlserializer4j.XMLSerializer;
-import org.xmlserializer4j.test.model.TestObject;
+import org.xmlserializer4j.test.model.ExampleObject;
 
 import static org.junit.Assert.*;
 
@@ -13,19 +14,20 @@ import static org.junit.Assert.*;
  */
 public class SerializeDeserializeTest {
 	
-    @Test public void testSerializeDeserialize() {
+    @Test public void testSerializeDeserialize() throws XMLSerializeException {
     	
     	// Create test object
-    	Object original = TestObject.getInstance(3);
+    	Object object = ExampleObject.getInstance(1);
     	
     	// Create serializer & serialize test object
 		XMLSerializer xmlSerializer = new XMLSerializer();
-		xmlSerializer.serialize(original);
+		xmlSerializer.setTransformer(XMLSerializer.HUMAN_READABLE_TRANSFORMER);
+		xmlSerializer.serialize(object, System.out);
 		
 		// Deserialize object
 		Object deserialized = xmlSerializer.deserialize();
 		
 		// Check if original & deserialized object are equal
-		assertEquals(original, deserialized);
+		assertEquals(object, deserialized);
     }
 }

@@ -14,7 +14,7 @@ import org.w3c.dom.NodeList;
 public class IterableSerializer extends AbsSerializer<Iterable<?>> {
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Iterable<?> iterable) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Iterable<?> iterable) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, iterable);
 		for(Object childObject: iterable) {
 			Element child = xmlSerializer.serializeToElement(childObject, XMLSerializer.ELEM, null);
@@ -27,7 +27,7 @@ public class IterableSerializer extends AbsSerializer<Iterable<?>> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public Iterable<?> deserialize(XMLSerializer xmlSerializer, Element element, Iterable<?> iterable) {
+	public Iterable<?> deserialize(XMLSerializer xmlSerializer, Element element, Iterable<?> iterable) throws XMLSerializeException {
 		String clazzName = element.getAttribute(XMLSerializer.CLASS);
 		try {
 			Class<?> clazz = Class.forName(clazzName);
@@ -51,13 +51,13 @@ public class IterableSerializer extends AbsSerializer<Iterable<?>> {
 			}
 			return collection;
 		} catch(ClassCastException e) {
-			throw new RuntimeException("Only Collection implementations are deserializable", e);
+			throw new XMLSerializeException("Only Collection implementations are deserializable", e);
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 }

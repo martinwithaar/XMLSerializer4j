@@ -11,6 +11,7 @@ public interface OnReferenceListener {
 	 * <p>This method is called when a referenced object has been found.</p>
 	 * @param reference
 	 * @param object
+	 * @throws XMLSerializeException
 	 */
-	public void onReferenceFound(String reference, Object object);
+	public void onReferenceFound(String reference, Object object) throws XMLSerializeException;
 }

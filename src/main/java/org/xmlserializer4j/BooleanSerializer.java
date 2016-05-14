@@ -2,10 +2,15 @@ package org.xmlserializer4j;
 
 import org.w3c.dom.Element;
 
+/**
+ * 
+ * @author Martin
+ *
+ */
 public class BooleanSerializer extends AbsSerializer<Boolean> {
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Boolean bool) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Boolean bool) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, bool);
 		element.setTextContent(bool.toString());
 		return element;
@@ -15,5 +20,4 @@ public class BooleanSerializer extends AbsSerializer<Boolean> {
 	public Boolean deserialize(XMLSerializer xmlSerializer, Element element, Boolean bool) {
 		return bool == null ? Boolean.valueOf(element.getTextContent()) : bool;
 	}
-
 }

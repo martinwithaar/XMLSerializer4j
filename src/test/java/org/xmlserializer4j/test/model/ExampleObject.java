@@ -9,52 +9,45 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.xmlserializer4j.annotation.Inclusion;
 import org.xmlserializer4j.annotation.XMLInclude;
+import org.xmlserializer4j.annotation.XMLTypeOverride;
 
 /**
- * <p>Test class for testing a variety of primitive and object types.</p>
+ * <p>Example class for testing a variety of primitive and object types.</p>
  * @author Martin
  *
  */
 @SuppressWarnings("unused")
-public class TestObject {
+public class ExampleObject {
 	// Static fields can be serialized and deserialized too: even if they're final!
 	protected static final Map<String, String> PRE_EXISTING_MAP = new LinkedHashMap<String, String>();
-	
 	private static String STATIC_STRING = "This object will be re-constructed upon deserialization,"
 			+ "unlike static final fields which are only re-populated"
 			+ "like the map on the previous line";
-	// Static final primitives are omitted by default. They are already set and are unchangeable anyway.
+	// Static final primitives are omitted by default. They are unchangeable anyway
 	private static final int JUST_SOME_NUMBER = 1337;
 	
 	// Arrays, collections and maps
-	private TestObject[] justAnArray;
-	private List<TestObject> listy;
-	private Map<Integer, TestObject> mappetyMap;
+	private int[] primes = new int[] { 2, 3, 5, 7, 11 };
+	private Object[] objects = new Object[] { null, new Integer(86400), null };
+	private ExampleObject[] justAnArray;
+	private List<ExampleObject> someList;
+	private Map<Integer, ExampleObject> someMap;
 	
-	// Primitives are serialized without any class or type specification because their type is always known
+	// Primitives are serialized without type specification because their type is always known
 	private int howMuchN;
 	private boolean isSuperCool = true;
 	private double equity = 1000000.00;
-	// Some more array magic
-	private int[] primes = new int[] { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 };
-	private Object[] objects = new Object[] { null, new Integer(86400), null };
 	
 	// Some more typical objects
-	//@XMLTypeOverride(clazz = Object.class)
 	private String helloWorld = "Hello world!";
 	private Date date = new Date();
-	
-	// By default null value fields are omitted but you can override this behavior
-	@XMLInclude
-	private Object aNullObject = null;
 	private URL url;
 	
-	/**
-	 * Empty constructor
-	 */
-	public TestObject() {
-	}
+	// By default null value fields are omitted but you can override this behavior
+	@XMLInclude(include = Inclusion.ALWAYS)
+	private Object aNullObject = null;
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -72,8 +65,8 @@ public class TestObject {
 		result = prime * result + howMuchN;
 		result = prime * result + (isSuperCool ? 1231 : 1237);
 		result = prime * result + Arrays.hashCode(justAnArray);
-		result = prime * result + ((listy == null) ? 0 : listy.hashCode());
-		result = prime * result + ((mappetyMap == null) ? 0 : mappetyMap.hashCode());
+		result = prime * result + ((someList == null) ? 0 : someList.hashCode());
+		result = prime * result + ((someMap == null) ? 0 : someMap.hashCode());
 		result = prime * result + Arrays.hashCode(objects);
 		result = prime * result + Arrays.hashCode(primes);
 		result = prime * result + ((url == null) ? 0 : url.hashCode());
@@ -91,7 +84,7 @@ public class TestObject {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		TestObject other = (TestObject) obj;
+		ExampleObject other = (ExampleObject) obj;
 		if (aNullObject == null) {
 			if (other.aNullObject != null)
 				return false;
@@ -115,15 +108,15 @@ public class TestObject {
 			return false;
 		if (!Arrays.equals(justAnArray, other.justAnArray))
 			return false;
-		if (listy == null) {
-			if (other.listy != null)
+		if (someList == null) {
+			if (other.someList != null)
 				return false;
-		} else if (!listy.equals(other.listy))
+		} else if (!someList.equals(other.someList))
 			return false;
-		if (mappetyMap == null) {
-			if (other.mappetyMap != null)
+		if (someMap == null) {
+			if (other.someMap != null)
 				return false;
-		} else if (!mappetyMap.equals(other.mappetyMap))
+		} else if (!someMap.equals(other.someMap))
 			return false;
 		if (!Arrays.equals(objects, other.objects))
 			return false;
@@ -139,32 +132,32 @@ public class TestObject {
 	
 	/**
 	 * <p>Recursively constructs instances of this class with depth <code>depth</code>.</p>
-	 * @param howMuchN
+	 * @param depth
 	 * @return
 	 */
-	public static final TestObject getInstance(int depth) {
+	public static final ExampleObject getInstance(int depth) {
 		// Populate map just once!
 		if(PRE_EXISTING_MAP.isEmpty()) {
 			PRE_EXISTING_MAP.put("Hello", "World");
 			PRE_EXISTING_MAP.put("Weather", "nice & hot");
 			PRE_EXISTING_MAP.put("Drink", "Martini on the rocks");
 		}
-		TestObject to = new TestObject();
-		to.justAnArray = new TestObject[depth];
-		to.listy = new ArrayList<TestObject>();
-		to.mappetyMap = new LinkedHashMap<Integer, TestObject>();
+		ExampleObject object = new ExampleObject();
+		object.justAnArray = new ExampleObject[depth];
+		object.someList = new ArrayList<ExampleObject>();
+		object.someMap = new LinkedHashMap<Integer, ExampleObject>();
 		for(int i = 0; i < depth; i++) {
-			TestObject child = getInstance(depth - 1);
-			to.justAnArray[i] = child;
-			to.mappetyMap.put(i, child);
+			ExampleObject child = getInstance(depth - 1);
+			object.justAnArray[i] = child;
+			object.someMap.put(i, child);
 		}
-		to.listy = new ArrayList<TestObject>(Arrays.asList(to.justAnArray));
-		to.howMuchN = depth;
+		object.someList = new ArrayList<ExampleObject>(Arrays.asList(object.justAnArray));
+		object.howMuchN = depth;
 		try {
-			to.url = new URL("https://www.google.com");
+			object.url = new URL("https://www.google.com");
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-		return to;
+		return object;
 	}
 }

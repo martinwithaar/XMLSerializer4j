@@ -5,14 +5,15 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xmlserializer4j.XMLSerializeException;
 import org.xmlserializer4j.XMLSerializer;
-import org.xmlserializer4j.test.model.TestObject;
+import org.xmlserializer4j.test.model.ExampleObject;
 
 public class IncludeNullTest {
-	@Test public void testIncludeNull() {
+	@Test public void testIncludeNull() throws XMLSerializeException {
 		
 		// Create test object
-    	Object original = TestObject.getInstance(0);
+    	Object original = ExampleObject.getInstance(0);
     	
     	// Create serializer & serialize test object
 		XMLSerializer xmlSerializer = new XMLSerializer();

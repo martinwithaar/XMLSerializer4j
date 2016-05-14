@@ -18,21 +18,21 @@ public class URLSerializer extends AbsSerializer<URL> {
 	 */
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, URL url) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, URL url) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, url);
 		element.setTextContent(url.toExternalForm());
 		return element;
 	}
 
 	@Override
-	public URL deserialize(XMLSerializer xmlSerializer, Element element, URL url) {
+	public URL deserialize(XMLSerializer xmlSerializer, Element element, URL url) throws XMLSerializeException {
 		if(url == null) {
 			try {
 				url = new URL(element.getTextContent());
 			} catch (MalformedURLException e) {
-				throw new RuntimeException(e);
+				throw new XMLSerializeException(e);
 			} catch (DOMException e) {
-				throw new RuntimeException(e);
+				throw new XMLSerializeException(e);
 			}
 		}
 		return url;

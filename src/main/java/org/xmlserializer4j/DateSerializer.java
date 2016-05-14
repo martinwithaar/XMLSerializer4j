@@ -57,20 +57,20 @@ public class DateSerializer extends AbsSerializer<Date> {
 	 */
 
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Date date) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Date date) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, date);
 		element.setTextContent(dateFormat != null ? dateFormat.format(date) : String.valueOf(date.getTime()));
 		return element;
 	}
 
 	@Override
-	public Date deserialize(XMLSerializer xmlSerializer, Element element, Date date) {
+	public Date deserialize(XMLSerializer xmlSerializer, Element element, Date date) throws XMLSerializeException {
 		try {
 			return date == null ? dateFormat != null ? dateFormat.parse(element.getTextContent()) : new Date(Long.valueOf(element.getTextContent())) : date;
 		} catch (DOMException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (ParseException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 }

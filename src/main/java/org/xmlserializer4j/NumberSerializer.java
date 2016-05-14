@@ -56,14 +56,14 @@ public class NumberSerializer extends AbsSerializer<Number> {
 	 */
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Number number) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Number number) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, number);
 		element.setTextContent(numberFormat.format(number));
 		return element;
 	}
 
 	@Override
-	public Number deserialize(XMLSerializer xmlSerializer, Element element, Number number) {
+	public Number deserialize(XMLSerializer xmlSerializer, Element element, Number number) throws XMLSerializeException {
 		try {
 			String clazzName = element.getAttribute(XMLSerializer.CLASS);
 			Class<?> clazz = Class.forName(clazzName);
@@ -83,13 +83,13 @@ public class NumberSerializer extends AbsSerializer<Number> {
 			} else if(Double.class.equals(clazz)) {
 				return number.doubleValue();
 			}
-			throw new IllegalArgumentException("Element of unexpected Number type");
+			throw new XMLSerializeException("Element of unexpected Number type");
 		} catch (DOMException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (ParseException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 }

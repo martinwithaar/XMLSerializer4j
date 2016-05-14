@@ -2,12 +2,11 @@ package org.xmlserializer4j.test;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 import org.xmlserializer4j.XMLSerializer;
-import org.xmlserializer4j.test.model.TestObject;
+import org.xmlserializer4j.test.model.ExampleObject;
 
 import static org.junit.Assert.*;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,23 +23,18 @@ public class GZIPSerializeTest {
 	
 	private static final String FILENAME = "serialized.xml.gz";
 	
-    @Test public void testSerializeDeserialize() {
+    @Test public void testSerializeDeserialize() throws IOException, SAXException {
     	
     	// Create test object
-    	Object original = TestObject.getInstance(3);
+    	Object original = ExampleObject.getInstance(3);
     	
     	// Create serializer & serialize test object
 		XMLSerializer xmlSerializer = new XMLSerializer();
 		OutputStream os = null;
 		try {
-			os = new FileOutputStream(FILENAME);
-			os = new GZIPOutputStream(os);
+			os = new GZIPOutputStream(new FileOutputStream(FILENAME));
 			xmlSerializer.serialize(original, os);
 			os.flush();
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		} finally {
 			if(os != null) {
 				try {
@@ -54,14 +48,9 @@ public class GZIPSerializeTest {
 		Object deserialized;
 		InputStream is = null;
 		try {
-			is = new FileInputStream(FILENAME);
-			is = new GZIPInputStream(is);
+			is = new GZIPInputStream(new FileInputStream(FILENAME));
 			xmlSerializer = new XMLSerializer(is);
-			Object deserialized = xmlSerializer.deserialize();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} catch (SAXException e) {
-			throw new RuntimeException(e);
+			deserialized = xmlSerializer.deserialize();
 		} finally {
 			if(is != null) {
 				try {
@@ -71,7 +60,6 @@ public class GZIPSerializeTest {
 				}
 			}
 		}
-		
 		
 		// Check if original & deserialized object are equal
 		assertEquals(original, deserialized);

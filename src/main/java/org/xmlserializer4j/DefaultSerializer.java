@@ -45,7 +45,7 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 	 */
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Object object) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Object object) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, object);
 		Document document = xmlSerializer.getDocument();
 		Class<?> clazz = object.getClass();
@@ -69,7 +69,7 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 				
 				// Serialize field value
 				XMLInclude include = field.getAnnotation(XMLInclude.class);
-				if(!xmlSerializer.isEnabled(XMLSerializer.EXCLUDE_ALL) && (include == null || Inclusion.NEVER  != include.type())) {
+				if(!xmlSerializer.isEnabled(XMLSerializer.EXCLUDE_ALL) && (include == null || Inclusion.NEVER  != include.include())) {
 					Class<?> fieldClazz = field.getType();
 					if(field.getType().isPrimitive()) {
 						boolean accessible = field.isAccessible();
@@ -93,10 +93,10 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 							} else if(char.class.equals(fieldClazz)) {
 								textContent = String.valueOf(field.getChar(object));
 							} else {
-								throw new IllegalArgumentException("Primitive field is of unknown type");
+								throw new XMLSerializeException("Primitive field is of unknown type");
 							}
 						} catch(IllegalAccessException e) {
-							throw new RuntimeException(e);
+							throw new XMLSerializeException(e);
 						} finally {
 							// Restore accessible
 							field.setAccessible(accessible);
@@ -110,10 +110,8 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 						field.setAccessible(true);
 						try {
 							value = field.get(object);
-						} catch (IllegalArgumentException e) {
-							throw new RuntimeException(e);
 						} catch (IllegalAccessException e) {
-							throw new RuntimeException(e);
+							throw new XMLSerializeException(e);
 						} finally {
 							// Restore accessible
 							field.setAccessible(accessible);
@@ -130,7 +128,7 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 	}
 
 	@Override
-	public Object deserialize(XMLSerializer xmlSerializer, Element element, Object object) {
+	public Object deserialize(XMLSerializer xmlSerializer, Element element, Object object) throws XMLSerializeException {
 		String clazzName = element.getAttribute(XMLSerializer.CLASS);
 		try {
 			Class<?> clazz = Class.forName(clazzName);
@@ -152,10 +150,8 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 							Object value;
 							try {
 								value = field.get(object);
-							} catch (IllegalArgumentException e) {
-								throw new RuntimeException(e);
 							} catch (IllegalAccessException e) {
-								throw new RuntimeException(e);
+								throw new XMLSerializeException(e);
 							}
 							value = xmlSerializer.deserializeElement((Element) node, value);
 						} else {
@@ -184,29 +180,27 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 			}
 			return object;
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (NoSuchFieldException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (SecurityException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 	
 	@Override
-	public void onReferenceFound(String reference, Object object) {
+	public void onReferenceFound(String reference, Object object) throws XMLSerializeException {
 		Set<UnsatisfiedField> unsatisfiedFields = unsatisfiedReferences.remove(reference);
 		if(unsatisfiedFields != null) {
 			for(UnsatisfiedField unsatisfiedField: unsatisfiedFields) {
 				try {
 					unsatisfiedField.satisfy(object);
-				} catch (IllegalArgumentException e) {
-					throw new RuntimeException(e);
 				} catch (IllegalAccessException e) {
-					throw new RuntimeException(e);
+					throw new XMLSerializeException(e);
 				}
 			}
 			unsatisfiedFields.clear();
@@ -224,10 +218,10 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 	 * @param field
 	 * @param value
 	 * @throws NumberFormatException
-	 * @throws IllegalArgumentException
+	 * @throws XMLSerializeException
 	 * @throws IllegalAccessException
 	 */
-	private static final void setPrimitiveField(Object object, Field field, String value) throws NumberFormatException, IllegalArgumentException, IllegalAccessException {
+	private static final void setPrimitiveField(Object object, Field field, String value) throws NumberFormatException, XMLSerializeException, IllegalAccessException {
 		Class<?> fieldClazz = field.getType();
 		if(byte.class.equals(fieldClazz)) {
 			field.setByte(object, Byte.valueOf(value));
@@ -246,7 +240,7 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 		} else if(char.class.equals(fieldClazz)) {
 			field.setChar(object, Character.valueOf(value.charAt(0)));
 		} else {
-			throw new IllegalArgumentException("Primitive field is of unknown type");
+			throw new XMLSerializeException("Primitive field is of unknown type");
 		}
 	}
 	
@@ -269,7 +263,7 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 			this.field = field;
 		}
 		
-		public void satisfy(Object value) throws IllegalArgumentException, IllegalAccessException {
+		public void satisfy(Object value) throws IllegalAccessException {
 			boolean accessible = field.isAccessible();
 			field.setAccessible(true);
 			field.set(object, value);

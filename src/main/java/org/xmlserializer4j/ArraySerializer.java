@@ -14,7 +14,7 @@ import org.w3c.dom.NodeList;
 public class ArraySerializer implements TypeSerializer<Object> {
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Object array) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Object array) throws XMLSerializeException {
 		Document document = xmlSerializer.getDocument();
 		Element element = document.createElement(elementName);
 		Class<?> clazz = array.getClass();
@@ -48,7 +48,7 @@ public class ArraySerializer implements TypeSerializer<Object> {
 	}
 
 	@Override
-	public Object deserialize(XMLSerializer xmlSerializer, Element element, Object array) {
+	public Object deserialize(XMLSerializer xmlSerializer, Element element, Object array) throws XMLSerializeException {
 		String clazzName = element.getAttribute(XMLSerializer.TYPE);
 		try {
 			Class<?> clazz = XMLSerializer.PRIMITIVE_TYPE_MAP.get(clazzName);
@@ -83,7 +83,7 @@ public class ArraySerializer implements TypeSerializer<Object> {
 			}
 			return array;
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 }

@@ -21,7 +21,7 @@ public class MapSerializer extends AbsSerializer<Map<?, ?>> {
 	 */
 
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Map<?, ?> object) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Map<?, ?> object) throws XMLSerializeException {
 		Element element = super.serialize(xmlSerializer, elementName, object);
 		for(Entry<?, ?> entry: object.entrySet()) {
 			Element child = xmlSerializer.serializeToElement(entry, ENTRY, null);
@@ -34,7 +34,7 @@ public class MapSerializer extends AbsSerializer<Map<?, ?>> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Map<?, ?> deserialize(XMLSerializer xmlSerializer, Element element, Map<?, ?> map) {
+	public Map<?, ?> deserialize(XMLSerializer xmlSerializer, Element element, Map<?, ?> map) throws XMLSerializeException {
 		String clazzName = element.getAttribute(XMLSerializer.CLASS);
 		try {
 			Class<?> clazz = Class.forName(clazzName);
@@ -65,13 +65,13 @@ public class MapSerializer extends AbsSerializer<Map<?, ?>> {
 			}
 			return map;
 		} catch(ClassCastException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (InstantiationException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
+			throw new XMLSerializeException(e);
 		}
 	}
 }

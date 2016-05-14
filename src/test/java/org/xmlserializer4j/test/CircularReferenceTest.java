@@ -1,5 +1,6 @@
 package org.xmlserializer4j.test;
 import org.junit.Test;
+import org.xmlserializer4j.XMLSerializeException;
 import org.xmlserializer4j.XMLSerializer;
 import org.xmlserializer4j.test.model.CircularTestObject;
 
@@ -12,7 +13,7 @@ import static org.junit.Assert.*;
  */
 public class CircularReferenceTest {
 	
-    @Test public void testCircularReference() {
+    @Test public void testCircularReference() throws XMLSerializeException {
     	
     	// Create test object
     	CircularTestObject original = CircularTestObject.getInstance(10);

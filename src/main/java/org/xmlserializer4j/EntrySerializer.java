@@ -19,7 +19,7 @@ public class EntrySerializer implements TypeSerializer<Entry<?, ?>> {
 	 */
 
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Entry<?, ?> entry) {
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Entry<?, ?> entry) throws XMLSerializeException {
 		Element element = xmlSerializer.getDocument().createElement(elementName);
 		
 		Element keyElement = xmlSerializer.serializeToElement(entry.getKey(), KEY, null);
