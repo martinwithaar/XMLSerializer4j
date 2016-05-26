@@ -9,9 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.xmlserializer4j.DefaultSerializer;
 import org.xmlserializer4j.annotation.Inclusion;
 import org.xmlserializer4j.annotation.XMLInclude;
 import org.xmlserializer4j.annotation.XMLTypeOverride;
+import org.xmlserializer4j.annotation.XMLTypeSerializer;
 
 /**
  * <p>Example class for testing a variety of primitive and object types.</p>

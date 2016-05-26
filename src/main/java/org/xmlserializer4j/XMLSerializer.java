@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,9 @@ import org.xmlserializer4j.annotation.XMLTypeSerializer;
  */
 public class XMLSerializer {
 	
+	/**
+	 * 
+	 */
 	public static final DocumentBuilder DEFAULT_DOCUMENT_BUILDER;
 	static {
 		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -87,31 +91,31 @@ public class XMLSerializer {
 	/**
 	 * <p>Serialize null values.</p>
 	 */
-	public static final Setting INCLUDE_NULL_VALUES = new Setting(0x01);
+	public static final Setting INCLUDE_NULL_VALUES = new Setting("INCLUDE_NULL_VALUES");
 	/**
 	 * <p>Include parent class fields.</p>
 	 */
-	public static final Setting INCLUDE_PARENTCLASS_FIELDS = new Setting(0x02);
+	public static final Setting INCLUDE_PARENTCLASS_FIELDS = new Setting("INCLUDE_PARENTCLASS_FIELDS");
 	/**
 	 * <p>Include static fields.</p>
 	 */
-	public static final Setting INCLUDE_STATIC = new Setting(0x03);
+	public static final Setting INCLUDE_STATIC = new Setting("INCLUDE_STATIC");
 	/**
 	 * <p>Include static final primitive values.</p>
 	 */
-	public static final Setting INCLUDE_STATIC_FINAL_PRIMITIVES = new Setting(0x04);
+	public static final Setting INCLUDE_STATIC_FINAL_PRIMITIVES = new Setting("INCLUDE_STATIC_FINAL_PRIMITIVES");
 	/**
 	 * <p>Excludes all fields by default unless an explicit <code>XMLInclude</code> annotation is present.</p>
 	 */
-	public static final Setting EXCLUDE_ALL = new Setting(0x10);
+	public static final Setting EXCLUDE_ALL = new Setting("EXCLUDE_ALL");
 	/**
 	 * <p>Include object hash codes as attributes. Useful for debugging purposes.</p>
 	 */
-	public static final Setting INCLUDE_HASHCODE = new Setting(0x80);
+	public static final Setting INCLUDE_HASHCODE = new Setting("INCLUDE_HASHCODE");
 	
 	private static final Set<Setting> DEFAULT_SETTINGS;
 	static {
-		Set<Setting> settings = new HashSet<Setting>();
+		Set<Setting> settings = new LinkedHashSet<Setting>();
 		settings.add(INCLUDE_PARENTCLASS_FIELDS);
 		//settings.add(INCLUDE_STATIC);
 		DEFAULT_SETTINGS = Collections.unmodifiableSet(settings);
@@ -191,6 +195,14 @@ public class XMLSerializer {
 	 * <p>Object hashcode attribute key.</p>
 	 */
 	private static final String HASHCODE = "hashCode";
+	/**
+	 * <p>Custom serializer attribute key.</p>
+	 */
+	private static final String SERIALIZER = "serializer";
+	/**
+	 * <p>Custom type override attribute key.</p>
+	 */
+	private static final String OVERRIDE = "override";
 	
 	/*
 	 * Attributes
@@ -259,17 +271,27 @@ public class XMLSerializer {
 	}
 	
 	/**
+	 * <p>Constructs a default <code>XMLSerializer</code> instance.</p>
+	 * @param document
+	 * @throws IOException 
+	 * @throws SAXException 
+	 */
+	public XMLSerializer(Document document) {
+		this(new LinkedList<SerializerEntry>(DEFAULT_SERIALIZERS), document, DEFAULT_TRANSFORMER);
+	}
+	
+	/**
 	 * <p>Constructs an <code>XMLSerializer</code> instance using a custom serializer list.</p>
 	 * @param serializers
 	 * @param document
 	 * @param transformer
 	 */
 	public XMLSerializer(List<SerializerEntry> serializers, Document document, Transformer transformer) {
+		this.serializers = serializers;
 		this.document = document;
 		this.transformer = transformer;
-		this.serializers = serializers;
-		this.settings = new HashSet<Setting>(DEFAULT_SETTINGS);
 		
+		this.settings = new LinkedHashSet<Setting>(DEFAULT_SETTINGS);
 		this.cacheMap = new HashMap<Class<?>, TypeSerializer<?>>();
 		this.customSerializerMap = new HashMap<Class<? extends TypeSerializer<?>>, TypeSerializer<?>>();
 		this.circularReferences = new IdentityHashMap<Object, Integer>();
@@ -458,14 +480,12 @@ public class XMLSerializer {
 	@SuppressWarnings("unchecked")
 	public Element serializeToElement(Object object, String elementName, AnnotatedElement annotatedElement) throws XMLSerializeException {
 		XMLInclude include = annotatedElement != null ? annotatedElement.getAnnotation(XMLInclude.class) : null;
-		
 		if(object != null) {
 			Class<?> clazz = object.getClass();
 			if(include == null) {
 				include = clazz.getAnnotation(XMLInclude.class);
 			}
 			if((!isEnabled(EXCLUDE_ALL) && (include == null || Inclusion.NEVER != include.include()))) {
-				
 				String reference = objectReferenceContext != null ? objectReferenceContext.getReference(object) : null;
 				Integer circularReferenceCount = circularReferences.get(object);
 				if(circularReferenceCount == null) {
@@ -473,20 +493,16 @@ public class XMLSerializer {
 				}
 				if(reference == null && circularReferenceCount == 0) {
 					try {
-						
 						if(objectReferenceContext != null) {
 							objectReferenceContext.createReference(object);
 						}
-						
 						// Avoid cyclic dependencies
 						circularReferences.put(object, ++circularReferenceCount);
-						
 						// Check for a custom type serializer annotation
 						XMLTypeSerializer typeSerializer = clazz.getAnnotation(XMLTypeSerializer.class);
 						if(typeSerializer == null && annotatedElement != null) {
 							typeSerializer = annotatedElement.getAnnotation(XMLTypeSerializer.class);
 						}
-						
 						Element element;
 						if(typeSerializer != null) {
 							// Reuse or create custom serializer
@@ -503,6 +519,7 @@ public class XMLSerializer {
 								}
 							}
 							element = serializer.serialize(this, elementName, object);
+							element.setAttribute(SERIALIZER, serializerClazz.getName());
 						} else if(clazz.isArray()) {
 							// Get array specific serializer
 							TypeSerializer<Object> serializer = (TypeSerializer<Object>) getSerializerByClass(Object[].class);
@@ -513,15 +530,15 @@ public class XMLSerializer {
 							if(typeOverride == null && annotatedElement != null) {
 								typeOverride = annotatedElement.getAnnotation(XMLTypeOverride.class);
 							}
-							if(typeOverride != null) {
-								clazz = typeOverride.clazz();
-							}
 							// Get appropriate serializer for class
-							TypeSerializer<Object> serializer = (TypeSerializer<Object>) getSerializerByClass(clazz);
+							TypeSerializer<Object> serializer = (TypeSerializer<Object>) getSerializerByClass(typeOverride != null ? typeOverride.clazz() : clazz);
 							if(serializer == null) {
 								throw new XMLSerializeException("No serializer found for class: " + clazz.getCanonicalName());
 							}
 							element = serializer.serialize(this, elementName, object);
+							if(typeOverride != null) {
+								element.setAttribute(OVERRIDE, typeOverride.clazz().getName());
+							}
 						}
 						if(objectReferenceContext != null) {
 							objectReferenceContext.mapObjectElement(object, element);
@@ -581,17 +598,39 @@ public class XMLSerializer {
 	 * @return
 	 * @throws XMLSerializeException
 	 */
+	@SuppressWarnings("unchecked")
 	public Object deserializeElement(Element element, Object object) throws XMLSerializeException {
-		if(element.hasAttribute(XMLSerializer.CLASS)) {
+		if(element.hasAttribute(SERIALIZER)) {
+			// Reuse or create custom serializer
+			Class<? extends TypeSerializer<?>> serializerClazz;
 			try {
-				String clazzName = element.getAttribute(XMLSerializer.CLASS);
-				Class<?> clazz = Class.forName(clazzName);
-				
+				serializerClazz = (Class<? extends TypeSerializer<?>>) Class.forName(element.getAttribute(SERIALIZER));
+			} catch (ClassNotFoundException e) {
+				throw new XMLSerializeException(e);
+			}
+			TypeSerializer<Object> serializer = (TypeSerializer<Object>) customSerializerMap.get(serializerClazz);
+			if(serializer == null) {
+				try {
+					serializer = (TypeSerializer<Object>) serializerClazz.newInstance();
+					customSerializerMap.put(serializerClazz, serializer);
+				} catch (InstantiationException e) {
+					throw new XMLSerializeException(e);
+				} catch (IllegalAccessException e) {
+					throw new XMLSerializeException(e);
+				}
+			}
+			object = serializer.deserialize(this, element, object);
+		} else if(element.hasAttribute(CLASS)) {
+			try {
+				Class<?> clazz;
+				if(element.hasAttribute(OVERRIDE)) {
+					clazz = Class.forName(element.getAttribute(OVERRIDE));
+				} else {
+					clazz = Class.forName(element.getAttribute(CLASS));
+				}
 				if(object != null && !clazz.equals(object.getClass())) {
 					throw new XMLSerializeException("Runtime object class is not equal to serialized class; expected: " + clazz.getName() + " encountered: " + object.getClass().getName());
 				}
-				
-				@SuppressWarnings("unchecked")
 				TypeSerializer<Object> serializer = (TypeSerializer<Object>) getSerializerByClass(clazz);
 				if(serializer == null ) {
 					throw new XMLSerializeException("No serializer found for class: " + clazz.getCanonicalName());
@@ -600,26 +639,25 @@ public class XMLSerializer {
 			} catch (ClassNotFoundException e) {
 				throw new XMLSerializeException(e);
 			}
-		} else if(element.hasAttribute(XMLSerializer.TYPE)) {
-			@SuppressWarnings("unchecked")
+		} else if(element.hasAttribute(TYPE)) {
 			TypeSerializer<Object[]> serializer = (TypeSerializer<Object[]>) getSerializerByClass(Object[].class);
 			if(serializer == null ) {
 				throw new XMLSerializeException("No serializer found for class: " + Object[].class.getCanonicalName());
 			}
 			object = serializer.deserialize(this, element, (Object[]) object);
-		} else if(element.hasAttribute(XMLSerializer.REF)) {
+		} else if(element.hasAttribute(REF)) {
 			if(objectReferenceContext != null) {
-				return objectReferenceContext.getObject(element.getAttribute(XMLSerializer.REF));
+				return objectReferenceContext.getObject(element.getAttribute(REF));
 			} else {
 				throw new XMLSerializeException("Object reference context not set");
 			}
-		} else if(XMLSerializer.TRUE.equals(element.getAttribute(XMLSerializer.NULL))) {
+		} else if(TRUE.equals(element.getAttribute(NULL))) {
 			object = null;
 		} else {
 			throw new XMLSerializeException("Could not deserialize element");
 		}
-		if(element.hasAttribute(XMLSerializer.ID)) {
-			String reference = element.getAttribute(XMLSerializer.ID);
+		if(element.hasAttribute(ID)) {
+			String reference = element.getAttribute(ID);
 			if(objectReferenceContext != null) {
 				objectReferenceContext.mapReferencedObject(reference, object);
 			}
@@ -649,11 +687,11 @@ public class XMLSerializer {
 	 *
 	 */
 	private static class Setting {
-		private int code;
+		private String name;
 
-		private Setting(int code) {
+		private Setting(String name) {
 			super();
-			this.code = code;
+			this.name = name;
 		}
 
 		/* (non-Javadoc)
@@ -663,7 +701,7 @@ public class XMLSerializer {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + code;
+			result = prime * result + ((name == null) ? 0 : name.hashCode());
 			return result;
 		}
 
@@ -679,7 +717,10 @@ public class XMLSerializer {
 			if (getClass() != obj.getClass())
 				return false;
 			Setting other = (Setting) obj;
-			if (code != other.code)
+			if (name == null) {
+				if (other.name != null)
+					return false;
+			} else if (!name.equals(other.name))
 				return false;
 			return true;
 		}
@@ -689,7 +730,7 @@ public class XMLSerializer {
 		 */
 		@Override
 		public String toString() {
-			return "Setting [code=" + code + "]";
+			return "Setting [name=" + name + "]";
 		}
 	}
 }

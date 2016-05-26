@@ -9,6 +9,94 @@
 
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+group = "org.xmlserializer4j"
+archivesBaseName = "XMLSerializer4j"
+version = "1.0"
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
+
+      pom.project {
+        name 'XMLSerializer4j'
+        packaging 'jar'
+        // optionally artifactId can be defined here 
+        description 'A application used as an example on how to set up pushing  its components to the Central Repository.'
+        url 'https://github.com/martinwithaar/XMLSerializer4j'
+
+        scm {
+          connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+          developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+          url 'http://foo.googlecode.com/svn/trunk/'
+        }
+
+        licenses {
+          license {
+            name 'The Apache License, Version 2.0'
+            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+
+        developers {
+          developer {
+            id 'martin'
+            name 'Martin Withaar'
+            email 'martin.withaar@gmail.com'
+          }
+        }
+      }
+    }
+  }
+}
+
+/*apply plugin: 'maven-publish'
+group = 'org.xmlserializer4j'
+version = '1.0'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    
+    repositories {
+        maven {
+            // change to point to your repo, e.g. http://my.org/repo
+            url "$buildDir/repo"
+        }
+    }
+}*/
 
 // In this section you declare where to find the dependencies of your project
 repositories {

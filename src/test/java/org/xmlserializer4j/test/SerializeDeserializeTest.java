@@ -25,6 +25,7 @@ public class SerializeDeserializeTest {
 		xmlSerializer.serialize(object, System.out);
 		
 		// Deserialize object
+		xmlSerializer = new XMLSerializer(xmlSerializer.getDocument());
 		Object deserialized = xmlSerializer.deserialize();
 		
 		// Check if original & deserialized object are equal
