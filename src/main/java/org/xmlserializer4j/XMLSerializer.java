@@ -277,8 +277,6 @@ public class XMLSerializer {
 	/**
 	 * <p>Constructs a default <code>XMLSerializer</code> instance.</p>
 	 * @param document
-	 * @throws IOException 
-	 * @throws SAXException 
 	 */
 	public XMLSerializer(Document document) {
 		this(new LinkedList<SerializerEntry>(DEFAULT_SERIALIZERS), document, DEFAULT_TRANSFORMER);
@@ -598,7 +596,7 @@ public class XMLSerializer {
 	/**
 	 * <p>Deserializes an XML element.</p>
 	 * @param element
-	 * @param optional runtime object to deserialize into
+	 * @param object optional runtime object to deserialize into
 	 * @return
 	 * @throws XMLSerializeException
 	 */

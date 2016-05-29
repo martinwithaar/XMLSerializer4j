@@ -4,7 +4,6 @@ package org.xmlserializer4j;
  * <p>Entry class for assigning a <code>TypeSerializer</code> implementation to a <code>Class</code> type.</p>
  * @author Martin
  *
- * @param <T>
  */
 public class SerializerEntry {
 	

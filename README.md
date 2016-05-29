@@ -1,5 +1,5 @@
 # XMLSerializer4j
-A simple and effective API for leveraging XML serialization in your Java application with ease.
+A simple and effective API for leveraging XML serialization in your Java application.
 
 ## Highlights
 XMLSerializer4j comes with many features that sets it apart from the rest:
