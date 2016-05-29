@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -124,8 +125,11 @@ public class XMLSerializer {
 	private static final List<SerializerEntry> DEFAULT_SERIALIZERS;
 	static {
 		List<SerializerEntry> serializers = new LinkedList<SerializerEntry>();
-		serializers.add(new SerializerEntry(Date.class, new DateSerializer()));
+		serializers.add(new SerializerEntry(Pattern.class, new PatternSerializer()));
 		serializers.add(new SerializerEntry(URL.class, new URLSerializer()));
+		serializers.add(new SerializerEntry(File.class, new FileSerializer()));
+		serializers.add(new SerializerEntry(Date.class, new DateSerializer()));
+		serializers.add(new SerializerEntry(Class.class, new ClassSerializer()));
 		serializers.add(new SerializerEntry(Iterable.class, new IterableSerializer()));
 		serializers.add(new SerializerEntry(Map.class, new MapSerializer()));
 		serializers.add(new SerializerEntry(Entry.class, new EntrySerializer()));

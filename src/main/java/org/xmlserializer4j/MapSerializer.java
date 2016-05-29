@@ -8,7 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * <p><code>TypeSerializer</code> implementation for serializing <code>Map</code> implementations.</p>
+ * <p><code>AbsSerializer</code> implementation for serializing <code>Map</code> implementations.</p>
  * @author Martin
  *
  */

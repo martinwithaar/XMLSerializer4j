@@ -12,18 +12,23 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-task javadocJar(type: Jar) {
+group = 'org.xmlserializer4j'
+version = '0.1'
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
-    from javadoc
+    from tasks.javadoc.destinationDir
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
     from sourceSets.main.allSource
+    classifier = 'sources'
 }
 
 artifacts {
-    archives javadocJar, sourcesJar
+    archives jar
+    archives javadocJar
+    archives sourcesJar
 }
 
 signing {
@@ -34,49 +39,46 @@ group = "org.xmlserializer4j"
 archivesBaseName = "XMLSerializer4j"
 version = "1.0"
 
+// http://yennicktrevels.com/blog/2013/10/11/automated-gradle-project-deployment-to-sonatype-oss-repository/
+
 uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+              authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
 
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        authentication(userName: ossrhUsername, password: ossrhPassword)
-      }
+            pom.project {
+               name 'GradleFx'
+               packaging 'jar'
+               description 'GradleFx is a Gradle plugin for building Flex and Actionscript applications'
+               url 'http://gradlefx.github.com/'
 
-      pom.project {
-        name 'XMLSerializer4j'
-        packaging 'jar'
-        // optionally artifactId can be defined here 
-        description 'A application used as an example on how to set up pushing  its components to the Central Repository.'
-        url 'https://github.com/martinwithaar/XMLSerializer4j'
+               scm {
+                   url 'scm:git@github.com:GradleFx/GradleFx.git'
+                   connection 'scm:git@github.com:GradleFx/GradleFx.git'
+                   developerConnection 'scm:git@github.com:GradleFx/GradleFx.git'
+               }
 
-        scm {
-          connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
-          developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-          url 'http://foo.googlecode.com/svn/trunk/'
+               licenses {
+                   license {
+                       name 'The MIT License (MIT)'
+                       url 'https://opensource.org/licenses/MIT'
+                       distribution 'repo'
+                   }
+               }
+
+               developers {
+                   developer {
+                       id 'martinwithaar'
+                       name 'Martin Withaar'
+                   }
+               }
+           }
         }
-
-        licenses {
-          license {
-            name 'The Apache License, Version 2.0'
-            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-          }
-        }
-
-        developers {
-          developer {
-            id 'martin'
-            name 'Martin Withaar'
-            email 'martin.withaar@gmail.com'
-          }
-        }
-      }
     }
-  }
 }
 
 /*apply plugin: 'maven-publish'
