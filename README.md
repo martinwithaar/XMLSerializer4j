@@ -221,6 +221,7 @@ Various settings can be enabled or disabled altering the serialization behavior.
 * *INCLUDE_PARENTCLASS_FIELDS* - Include all parent class fields (enabled by default)
 * *INCLUDE_STATIC* - Include static fields
 * *INCLUDE_STATIC_FINAL_PRIMITIVES* - Include static final primitives (these can't actually mutate)
+* *INCLUDE_SCOPE_ALWAYS* - Always includes the scope attribute for resolving duplicate field names in parent classes
 * *EXCLUDE_ALL* - Exclude all fields unless explicitly included
 * *INCLUDE_HASHCODE* - Include hashcodes as attributes
 

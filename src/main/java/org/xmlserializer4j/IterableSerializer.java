@@ -1,9 +1,9 @@
 package org.xmlserializer4j;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -30,7 +30,12 @@ public class IterableSerializer extends AbsSerializer<Iterable<?>> {
 	public Iterable<?> deserialize(XMLSerializer xmlSerializer, Element element, Iterable<?> iterable) throws XMLSerializeException {
 		String clazzName = element.getAttribute(XMLSerializer.CLASS);
 		try {
-			Class<?> clazz = Class.forName(clazzName);
+			Class<?> clazz;
+			if(clazzName.equals("java.util.Arrays$ArrayList")) {
+				clazz = ArrayList.class;
+			} else {
+				clazz = Class.forName(clazzName);
+			}
 			Collection<Object> collection;
 			if(iterable == null) {
 				collection = (Collection<Object>) clazz.newInstance();
@@ -41,10 +46,12 @@ public class IterableSerializer extends AbsSerializer<Iterable<?>> {
 			// Parse child nodes
 			NodeList childNodes = element.getChildNodes();
 			for(int i = 0, n = childNodes.getLength(); i < n; i++) {
-				Node node = childNodes.item(i);
 				try {
-					Object childObject = xmlSerializer.deserializeElement((Element) node, null);
-					collection.add(childObject);
+					Element childElement = (Element) childNodes.item(i);
+					//if(element.getNodeName().equals(XMLSerializer.ELEM)) {
+						Object childObject = xmlSerializer.deserializeElement(childElement, null);
+						collection.add(childObject);
+					//}
 				} catch(ClassCastException e) {
 					// Do nothing
 				}

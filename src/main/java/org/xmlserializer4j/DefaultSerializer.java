@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import org.xmlserializer4j.annotation.Inclusion;
@@ -50,9 +49,13 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 		Document document = xmlSerializer.getDocument();
 		Class<?> clazz = object.getClass();
 		boolean includeParentclassFields = xmlSerializer.isEnabled(XMLSerializer.INCLUDE_PARENTCLASS_FIELDS);
+		boolean includeScopeAlways = xmlSerializer.isEnabled(XMLSerializer.INCLUDE_SCOPE_ALWAYS);
+		Set<String> fieldNames = new HashSet<String>();
 		do {
 			Field[] fields = clazz.getDeclaredFields();
 			for(Field field: fields) {
+				
+				String fieldName = field.getName();
 				
 				// Handle static fields according to settings
 				int modifiers = field.getModifiers();
@@ -101,8 +104,11 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 							// Restore accessible
 							field.setAccessible(accessible);
 						}
-						Element child = document.createElement(field.getName());
+						Element child = document.createElement(fieldName);
 						child.setTextContent(textContent);
+						if(includeScopeAlways || fieldNames.contains(fieldName)) {
+							child.setAttribute(XMLSerializer.SCOPE, clazz.getName());
+						}
 						element.appendChild(child);
 					} else {
 						Object value;
@@ -116,11 +122,15 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 							// Restore accessible
 							field.setAccessible(accessible);
 						}
-						Element child = xmlSerializer.serializeToElement(value, field.getName(), field);
+						Element child = xmlSerializer.serializeToElement(value, fieldName, field);
 						if(child != null) {
+							if(includeScopeAlways || fieldNames.contains(fieldName)) {
+								child.setAttribute(XMLSerializer.SCOPE, clazz.getName());
+							}
 							element.appendChild(child);
 						}
 					}
+					fieldNames.add(fieldName);
 				}
 			}
 		} while(includeParentclassFields && (clazz = clazz.getSuperclass()) != null);
@@ -135,45 +145,56 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 			if(object == null) {
 				object = clazz.newInstance();
 			}
-			
 			// Parse child nodes
+			boolean includeParentclassFields = xmlSerializer.isEnabled(XMLSerializer.INCLUDE_PARENTCLASS_FIELDS);
 			NodeList childNodes = element.getChildNodes();
 			for(int i = 0, n = childNodes.getLength(); i < n; i++) {
-				Node node = childNodes.item(i);
 				try {
-					Field field = clazz.getDeclaredField(node.getNodeName());
-					boolean accessible = field.isAccessible();
-					field.setAccessible(true);
-					if(!field.getType().isPrimitive()) {
-						int modifiers = field.getModifiers();
-						if(Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)) {
-							Object value;
-							try {
-								value = field.get(object);
-							} catch (IllegalAccessException e) {
-								throw new XMLSerializeException(e);
-							}
-							value = xmlSerializer.deserializeElement((Element) node, value);
-						} else {
-							Element childElement = (Element) node;
-							Object value = xmlSerializer.deserializeElement(childElement, null);
-							field.set(object, value);
-							
-							if(childElement.hasAttribute(XMLSerializer.REF) && value == null) {
-								// Unsatisfied reference
-								String reference = childElement.getAttribute(XMLSerializer.REF);
-								Set<UnsatisfiedField> fields = unsatisfiedReferences.get(reference);
-								if(fields == null) {
-									fields = setRecycler.isEmpty() ? new HashSet<UnsatisfiedField>(): setRecycler.poll();
-									unsatisfiedReferences.put(reference, fields);
-								}
-								fields.add(new UnsatisfiedField(object, field));
-							}
+					Element childElement = (Element) childNodes.item(i);
+					Class<?> scope = childElement.hasAttribute(XMLSerializer.SCOPE) ? Class.forName(childElement.getAttribute(XMLSerializer.SCOPE)) : null;
+					while(clazz != null) {
+						if(scope != null && !clazz.equals(scope)) {
+							clazz = clazz.getSuperclass();
+							continue;
 						}
-					} else {
-						setPrimitiveField(object, field, ((Element)node).getTextContent());
+						
+						try {
+							Field field = clazz.getDeclaredField(childElement.getNodeName());
+							boolean accessible = field.isAccessible();
+							field.setAccessible(true);
+							if(!field.getType().isPrimitive()) {
+								int modifiers = field.getModifiers();
+								if(Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers)) {
+									Object value;
+									try {
+										value = field.get(object);
+									} catch (IllegalAccessException e) {
+										throw new XMLSerializeException(e);
+									}
+									value = xmlSerializer.deserializeElement(childElement, value);
+								} else {
+									Object value = xmlSerializer.deserializeElement(childElement, null);
+									field.set(object, value);
+									if(childElement.hasAttribute(XMLSerializer.REF) && value == null) {
+										// Unsatisfied reference
+										String reference = childElement.getAttribute(XMLSerializer.REF);
+										Set<UnsatisfiedField> fields = unsatisfiedReferences.get(reference);
+										if(fields == null) {
+											fields = setRecycler.isEmpty() ? new HashSet<UnsatisfiedField>(): setRecycler.poll();
+											unsatisfiedReferences.put(reference, fields);
+										}
+										fields.add(new UnsatisfiedField(object, field));
+									}
+								}
+							} else {
+								setPrimitiveField(object, field, childElement.getTextContent());
+							}
+							field.setAccessible(accessible);
+							break;
+						} catch (NoSuchFieldException e) {
+							clazz = includeParentclassFields ? clazz.getSuperclass() : null;
+						}
 					}
-					field.setAccessible(accessible);
 				} catch(ClassCastException e) {
 					// Do nothing
 				}
@@ -184,8 +205,6 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 		} catch (InstantiationException e) {
 			throw new XMLSerializeException(e);
 		} catch (IllegalAccessException e) {
-			throw new XMLSerializeException(e);
-		} catch (NoSuchFieldException e) {
 			throw new XMLSerializeException(e);
 		} catch (SecurityException e) {
 			throw new XMLSerializeException(e);

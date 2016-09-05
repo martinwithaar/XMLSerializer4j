@@ -106,6 +106,10 @@ public class XMLSerializer {
 	 */
 	public static final Setting INCLUDE_STATIC_FINAL_PRIMITIVES = new Setting("INCLUDE_STATIC_FINAL_PRIMITIVES");
 	/**
+	 * <p>Always includes the scope attribute for resolving duplicate field names in parent classes.</p>
+	 */
+	public static final Setting INCLUDE_SCOPE_ALWAYS = new Setting("INCLUDE_SCOPE_ALWAYS");
+	/**
 	 * <p>Excludes all fields by default unless an explicit <code>XMLInclude</code> annotation is present.</p>
 	 */
 	public static final Setting EXCLUDE_ALL = new Setting("EXCLUDE_ALL");
@@ -167,6 +171,10 @@ public class XMLSerializer {
 	 * <p>Class name attribute key.</p> 
 	 */
 	protected static final String CLASS = "class";
+	/**
+	 * <p>Scope class name attribute key.</p>
+	 */
+	protected static final String SCOPE = "scope";
 	/**
 	 * <p>Array component type attribute key.</p>
 	 */

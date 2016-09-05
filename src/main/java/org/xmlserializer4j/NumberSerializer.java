@@ -1,5 +1,8 @@
 package org.xmlserializer4j;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 
@@ -67,6 +70,24 @@ public class NumberSerializer extends AbsSerializer<Number> {
 		try {
 			String clazzName = element.getAttribute(XMLSerializer.CLASS);
 			Class<?> clazz = Class.forName(clazzName);
+			if(BigDecimal.class.equals(clazz)) {
+				try {
+					DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
+					decimalFormat.setParseBigDecimal(true);
+					return decimalFormat.parse(element.getTextContent());
+				} catch(ClassCastException e) {
+					throw new XMLSerializeException(e);
+				}
+			} else if(BigInteger.class.equals(clazz)) {
+				try {
+					DecimalFormat decimalFormat = (DecimalFormat) numberFormat;
+					decimalFormat.setParseBigDecimal(true);
+					BigDecimal bigDecimal = (BigDecimal) decimalFormat.parse(element.getTextContent());
+					return bigDecimal.toBigInteger();
+				} catch(ClassCastException e) {
+					throw new XMLSerializeException(e);
+				}
+			}
 			if(number == null) {
 				number = numberFormat.parse(element.getTextContent());
 			}
