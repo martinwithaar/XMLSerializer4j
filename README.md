@@ -218,7 +218,7 @@ Various settings can be enabled or disabled altering the serialization behavior.
 
 **Available settings:**
 * *INCLUDE_NULL_VALUES* - Include all *null* values
-* *INCLUDE_PRIMITIVE_ZERO_FALSE* - Includes primitives *0* and *false* values (enabled by default)
+* *INCLUDE_PRIMITIVE_ZERO_FALSE* - Includes primitive *0* and *false* values (enabled by default)
 * *INCLUDE_PARENTCLASS_FIELDS* - Include all parent class fields (enabled by default)
 * *INCLUDE_STATIC* - Include static fields
 * *INCLUDE_STATIC_FINAL_PRIMITIVES* - Include static final primitives (these can't actually mutate)
