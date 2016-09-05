@@ -23,7 +23,7 @@ public class ScopeTest {
     	
     	// Create serializer & serialize test object
 		XMLSerializer xmlSerializer = new XMLSerializer();
-		//xmlSerializer.enable(XMLSerializer.INCLUDE_SCOPE_ALWAYS);
+		//xmlSerializer.disable(XMLSerializer.INCLUDE_PRIMITIVE_ZERO_FALSE);
 		xmlSerializer.setTransformer(XMLSerializer.HUMAN_READABLE_TRANSFORMER);
 		xmlSerializer.serialize(original, System.out);
 		

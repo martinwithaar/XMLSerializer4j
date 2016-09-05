@@ -41,7 +41,7 @@ public class ExampleObject {
 	
 	// Primitives are serialized without type specification because their type is always known
 	private int howMuchN;
-	private boolean isSuperCool = true;
+	private boolean isSuperCool = false;
 	private double equity = 1000000.00;
 	
 	// Some more typical objects

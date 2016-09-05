@@ -94,6 +94,10 @@ public class XMLSerializer {
 	 */
 	public static final Setting INCLUDE_NULL_VALUES = new Setting("INCLUDE_NULL_VALUES");
 	/**
+	 * <p>Includes primitives <code>0</code> and <code>false</code> values. These are not strictly necessary for correct deserialization.</p>
+	 */
+	public static final Setting INCLUDE_PRIMITIVE_ZERO_FALSE = new Setting("INCLUDE_PRIMITIVE_ZERO_FALSE");
+	/**
 	 * <p>Include parent class fields.</p>
 	 */
 	public static final Setting INCLUDE_PARENTCLASS_FIELDS = new Setting("INCLUDE_PARENTCLASS_FIELDS");
@@ -121,6 +125,7 @@ public class XMLSerializer {
 	private static final Set<Setting> DEFAULT_SETTINGS;
 	static {
 		Set<Setting> settings = new LinkedHashSet<Setting>();
+		settings.add(INCLUDE_PRIMITIVE_ZERO_FALSE);
 		settings.add(INCLUDE_PARENTCLASS_FIELDS);
 		//settings.add(INCLUDE_STATIC);
 		DEFAULT_SETTINGS = Collections.unmodifiableSet(settings);

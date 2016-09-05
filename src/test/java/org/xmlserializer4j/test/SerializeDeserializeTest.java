@@ -22,6 +22,7 @@ public class SerializeDeserializeTest {
     	// Create serializer & serialize test object
 		XMLSerializer xmlSerializer = new XMLSerializer();
 		xmlSerializer.setTransformer(XMLSerializer.HUMAN_READABLE_TRANSFORMER);
+		xmlSerializer.enable(XMLSerializer.INCLUDE_PRIMITIVE_ZERO_FALSE);
 		xmlSerializer.serialize(object, System.out);
 		
 		// Deserialize object

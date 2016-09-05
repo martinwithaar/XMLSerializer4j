@@ -48,6 +48,8 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 		Element element = super.serialize(xmlSerializer, elementName, object);
 		Document document = xmlSerializer.getDocument();
 		Class<?> clazz = object.getClass();
+		
+		boolean includePrimitiveZeroFalse = xmlSerializer.isEnabled(XMLSerializer.INCLUDE_PRIMITIVE_ZERO_FALSE);
 		boolean includeParentclassFields = xmlSerializer.isEnabled(XMLSerializer.INCLUDE_PARENTCLASS_FIELDS);
 		boolean includeScopeAlways = xmlSerializer.isEnabled(XMLSerializer.INCLUDE_SCOPE_ALWAYS);
 		Set<String> fieldNames = new HashSet<String>();
@@ -77,24 +79,48 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 					if(field.getType().isPrimitive()) {
 						boolean accessible = field.isAccessible();
 						field.setAccessible(true);
-						String textContent;
+						String textContent = null;
 						try {
 							if(byte.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getByte(object));
+								byte value = field.getByte(object);
+								if(includePrimitiveZeroFalse || value != 0) {
+									textContent = String.valueOf(value);
+								}
 							} else if(short.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getShort(object));
+								short value = field.getShort(object);
+								if(includePrimitiveZeroFalse || value != 0) {
+									textContent = String.valueOf(value);
+								}
 							} else if(int.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getInt(object));
+								int value = field.getInt(object);
+								if(includePrimitiveZeroFalse || value != 0) {
+									textContent = String.valueOf(value);
+								}
 							} else if(long.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getLong(object));
+								long value = field.getLong(object);
+								if(includePrimitiveZeroFalse || value != 0L) {
+									textContent = String.valueOf(value);
+								}
 							} else if(float.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getFloat(object));
+								float value = field.getFloat(object);
+								if(includePrimitiveZeroFalse || value != 0.0f) {
+									textContent = String.valueOf(value);
+								}
 							} else if(double.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getDouble(object));
+								double value = field.getDouble(object);
+								if(includePrimitiveZeroFalse || value != 0.0d) {
+									textContent = String.valueOf(value);
+								}
 							} else if(boolean.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getBoolean(object));
+								boolean value = field.getBoolean(object);
+								if(includePrimitiveZeroFalse || value) {
+									textContent = String.valueOf(value);
+								}
 							} else if(char.class.equals(fieldClazz)) {
-								textContent = String.valueOf(field.getChar(object));
+								char value = field.getChar(object);
+								if(includePrimitiveZeroFalse || value != '\u0000') {
+									textContent = String.valueOf(value);
+								}
 							} else {
 								throw new XMLSerializeException("Primitive field is of unknown type");
 							}
@@ -104,12 +130,14 @@ public class DefaultSerializer extends AbsSerializer<Object> implements OnRefere
 							// Restore accessible
 							field.setAccessible(accessible);
 						}
-						Element child = document.createElement(fieldName);
-						child.setTextContent(textContent);
-						if(includeScopeAlways || fieldNames.contains(fieldName)) {
-							child.setAttribute(XMLSerializer.SCOPE, clazz.getName());
+						if(textContent != null) {
+							Element child = document.createElement(fieldName);
+							child.setTextContent(textContent);
+							if(includeScopeAlways || fieldNames.contains(fieldName)) {
+								child.setAttribute(XMLSerializer.SCOPE, clazz.getName());
+							}
+							element.appendChild(child);
 						}
-						element.appendChild(child);
 					} else {
 						Object value;
 						boolean accessible = field.isAccessible();
