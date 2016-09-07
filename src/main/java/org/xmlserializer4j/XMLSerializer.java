@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -127,7 +129,6 @@ public class XMLSerializer {
 		Set<Setting> settings = new LinkedHashSet<Setting>();
 		settings.add(INCLUDE_PRIMITIVE_ZERO_FALSE);
 		settings.add(INCLUDE_PARENTCLASS_FIELDS);
-		//settings.add(INCLUDE_STATIC);
 		DEFAULT_SETTINGS = Collections.unmodifiableSet(settings);
 	}
 	
@@ -135,8 +136,11 @@ public class XMLSerializer {
 	static {
 		List<SerializerEntry> serializers = new LinkedList<SerializerEntry>();
 		serializers.add(new SerializerEntry(Pattern.class, new PatternSerializer()));
+		serializers.add(new SerializerEntry(UUID.class, new UUIDSerializer()));
+		serializers.add(new SerializerEntry(URI.class, new URISerializer()));
 		serializers.add(new SerializerEntry(URL.class, new URLSerializer()));
 		serializers.add(new SerializerEntry(File.class, new FileSerializer()));
+		//serializers.add(new SerializerEntry(Calendar.class, new CalendarSerializer()));
 		serializers.add(new SerializerEntry(Date.class, new DateSerializer()));
 		serializers.add(new SerializerEntry(Class.class, new ClassSerializer()));
 		serializers.add(new SerializerEntry(Iterable.class, new IterableSerializer()));
@@ -511,7 +515,7 @@ public class XMLSerializer {
 						if(objectReferenceContext != null) {
 							objectReferenceContext.createReference(object);
 						}
-						// Avoid cyclic dependencies
+						// Avoid circular references
 						circularReferences.put(object, ++circularReferenceCount);
 						// Check for a custom type serializer annotation
 						XMLTypeSerializer typeSerializer = clazz.getAnnotation(XMLTypeSerializer.class);

@@ -2,17 +2,18 @@ package org.xmlserializer4j;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Element;
 
 /**
- * <p><code>AbsSerializer</code> implementation for serializing <code>Date</code> objects.</p>
+ * <p><code>AbsSerializer</code> implementation for serializing <code>Calendar</code> objects.</p>
  * @author Martin
  *
  */
-public class DateSerializer extends AbsSerializer<Date> {
+public class CalendarSerializer extends AbsSerializer<Calendar> {
 	
 	/*
 	 * Attributes
@@ -24,11 +25,11 @@ public class DateSerializer extends AbsSerializer<Date> {
 	 * Constructor(s)
 	 */
 	
-	public DateSerializer() {
+	public CalendarSerializer() {
 		this(null);
 	}
 	
-	public DateSerializer(DateFormat dateFormat) {
+	public CalendarSerializer(DateFormat dateFormat) {
 		this.dateFormat = dateFormat;
 	}
 	
@@ -57,16 +58,22 @@ public class DateSerializer extends AbsSerializer<Date> {
 	 */
 	
 	@Override
-	public Element serialize(XMLSerializer xmlSerializer, String elementName, Date date) throws XMLSerializeException {
-		Element element = super.serialize(xmlSerializer, elementName, date);
+	public Element serialize(XMLSerializer xmlSerializer, String elementName, Calendar cal) throws XMLSerializeException {
+		Element element = super.serialize(xmlSerializer, elementName, cal);
+		Date date = cal.getTime();
 		element.setTextContent(dateFormat != null ? dateFormat.format(date) : String.valueOf(date.getTime()));
 		return element;
 	}
 
 	@Override
-	public Date deserialize(XMLSerializer xmlSerializer, Element element, Date date) throws XMLSerializeException {
+	public Calendar deserialize(XMLSerializer xmlSerializer, Element element, Calendar cal) throws XMLSerializeException {
 		try {
-			return date == null ? dateFormat != null ? dateFormat.parse(element.getTextContent()) : new Date(Long.valueOf(element.getTextContent())) : date;
+			if(cal == null) {
+				cal = Calendar.getInstance();
+				Date date = dateFormat != null ? dateFormat.parse(element.getTextContent()) : new Date(Long.valueOf(element.getTextContent()));
+				cal.setTime(date);
+			}
+			return cal;
 		} catch (DOMException e) {
 			throw new XMLSerializeException(e);
 		} catch (ParseException e) {
