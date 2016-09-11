@@ -20,7 +20,7 @@ Deserialize the file like this:
 
 ```java
 XMLSerializer xmlSerializer = new XMLSerializer("MySerializedObject.xml");
-Object myObject = xmlSerializer.deserialize(myObject);
+Object myObject = xmlSerializer.deserialize();
 ```
 
 By default the XML output omits line breaks and unnecessary whitespace. In order to make the XML output human-readable with line breaks and indentation included do this:
