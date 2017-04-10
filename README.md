@@ -263,3 +263,6 @@ LinkedList<SerializerEntry> serializers = (LinkedList<SerializerEntry>) xmlSeria
 serializers.addFirst(new SerializerEntry(MyObject.class, new MyObjectSerializer()));
 ```
 **Note:** The placement of the serializer in the list is important: the first encountered serializer that is applicable is used.
+
+## Javadoc
+Consult the project's Javadoc at http://martinwithaar.github.io/XMLSerializer4j/
